@@ -10,8 +10,8 @@
   "scripts": {
     "start": "node --inspect --watch --loader ts-node/esm ./src/main.ts",
     "test": "node --test --test-only --loader ts-node/esm src/index.test.ts",
-    "test:watch": "node --watch --test --test-only --loader ts-node/esm src/index.test.ts",
-    "test:debug": "node --inspect --watch --test --test-only --loader ts-node/esm src/index.test.ts"
+    "test:watch": "node --watch --loader ts-node/esm src/index.test.ts",
+    "test:debug": "node --inspect --watch --loader ts-node/esm src/index.test.ts"
   },
   "author": {
     "name": "Calindra"
@@ -26,5 +26,10 @@
     "eslint-plugin-prettier": "^4.2.1",
     "ts-node": "^10.9.1",
     "typescript": "^4.9.3"
+  },
+  "dependencies": {
+    "@project-serum/anchor": "^0.25.0",
+    "@solana/web3.js": "^1.66.2",
+    "ethers": "^5.7.2"
   }
 }

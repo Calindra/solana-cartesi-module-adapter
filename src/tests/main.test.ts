@@ -5,7 +5,7 @@ function sum(a: number, b: number): number {
   return a + b;
 }
 
-describe('portal', () => {
+describe('rollups', () => {
   it('should return the sum of two numbers', () => {
     assert.strictEqual(sum(1, 2), 3);
   });
