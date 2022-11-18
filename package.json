@@ -9,8 +9,9 @@
   "type": "module",
   "scripts": {
     "start": "node --inspect --watch --loader ts-node/esm ./src/main.ts",
-    "test": "node --loader ts-node/esm src/index.test.ts",
-    "test:maybe": "node --test --test-only --loader ts-node/esm src/index.ts"
+    "test": "node --test --test-only --loader ts-node/esm src/index.test.ts",
+    "test:watch": "node --watch --test --test-only --loader ts-node/esm src/index.test.ts",
+    "test:debug": "node --inspect --watch --test --test-only --loader ts-node/esm src/index.test.ts"
   },
   "author": {
     "name": "Calindra"
