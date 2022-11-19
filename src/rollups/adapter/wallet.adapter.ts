@@ -3,7 +3,7 @@ import { Keypair } from '@solana/web3.js';
 import { type WalletType } from '../../types/Framework';
 
 export class AdaptedWallet implements WalletType {
-  public payer = Keypair.fromSecretKey(
+  public readonly payer = Keypair.fromSecretKey(
     Uint8Array.from([
       121, 122, 251, 173, 123, 1, 141, 44, 75, 160, 11, 107, 14, 238, 24, 175,
       213, 180, 116, 96, 185, 108, 36, 202, 121, 64, 84, 243, 230, 252, 143, 86,
@@ -19,9 +19,5 @@ export class AdaptedWallet implements WalletType {
   }
   public get publicKey(): PublicKey {
     throw new Error('Method not implemented.');
-  }
-
-  public setPublicKey(publicKey: PublicKey): void {
-    // this._publicKey = publicKey;
   }
 }

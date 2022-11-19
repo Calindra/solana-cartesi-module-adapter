@@ -1,11 +1,11 @@
 import {
-  AnchorProvider,
-  Idl,
-  Program,
-  Wallet,
+  type AnchorProvider,
+  type Idl,
+  type Program,
+  type Wallet,
 } from '@project-serum/anchor';
-import { Connection, PublicKey } from '@solana/web3.js';
-import { Signer } from 'ethers';
+import { type Connection, type PublicKey } from '@solana/web3.js';
+import { type Signer } from 'ethers';
 
 export interface WorkspaceShared {
   provider: AnchorProvider;
@@ -34,11 +34,6 @@ export interface Framework {
 export interface DevelepmentFramework extends Framework {
   getProvider(signer?: Signer): WorkspaceShared;
   getPublicKey(idl: Idl): PublicKey;
-  generateProgram(
-    idl: Idl,
-    programId: PublicKey,
-    provider: WorkspaceShared
-  ): Program<Idl>;
 
   getConnection(): Connection;
 

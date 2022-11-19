@@ -1,6 +1,6 @@
 import { type Idl } from '@project-serum/anchor';
 import { Program } from '@project-serum/anchor';
-import { type Connection, type PublicKey } from '@solana/web3.js';
+import { type Connection, PublicKey } from '@solana/web3.js';
 import { clusterApiUrl } from '@solana/web3.js';
 import { type Signer } from 'ethers';
 import { Buffer } from 'node:buffer';
@@ -18,9 +18,12 @@ import { AdaptedWallet } from './adapter/wallet.adapter';
 
 export default class Rollups implements DevelepmentFramework {
   public convertEthAddress2Solana(ethAddress: string): PublicKey {
-    const bytes = Buffer.from(ethAddress.slice(2, 34), 'hex');
-    throw new Error('Method not implemented.');
-    // const sol32 = Buffer.concat([Buffer.alloc(12), bytes]);
+    const bytes = Buffer.from(ethAddress.slice(2), 'hex');
+    const sol32bytes = Buffer.concat([bytes, Buffer.alloc(12)]);
+
+    /** exist space to put byte to recover public key original */
+    const pubKey = PublicKey.decode(sol32bytes) as PublicKey;
+    return pubKey;
   }
   public getConnection(): Connection {
     const network = clusterApiUrl('devnet');
@@ -44,14 +47,19 @@ export default class Rollups implements DevelepmentFramework {
     return { connection, provider, wallet };
   }
   public getPublicKey(idl: Idl): PublicKey {
-    throw new Error('Method not implemented.');
-  }
-  public generateProgram(
-    idl: Idl,
-    programId: PublicKey,
-    provider: WorkspaceShared
-  ): Program<Idl> {
-    throw new Error('Method not implemented.');
+    const metadata: unknown = idl.metadata;
+
+    if (
+      typeof metadata === 'object' &&
+      metadata !== null &&
+      'address' in metadata &&
+      typeof metadata.address === 'string'
+    ) {
+      const { address } = metadata;
+      return new PublicKey(address);
+    }
+
+    throw new TypeError('Invalid idl metadata');
   }
   public async onWalletConnected(
     signer: Signer,
