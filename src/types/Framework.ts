@@ -1,11 +1,11 @@
-import type {
+import {
   AnchorProvider,
   Idl,
   Program,
   Wallet,
 } from '@project-serum/anchor';
 import { Connection, PublicKey } from '@solana/web3.js';
-import type { Signer } from 'ethers';
+import { Signer } from 'ethers';
 
 export interface WorkspaceShared {
   provider: AnchorProvider;
@@ -26,8 +26,8 @@ export interface Framework {
   getWorkspace<T extends Idl>(args: WorkspaceArgs<T>): Workspace<T>;
   onWalletConnected(
     signer: Signer,
-    wallet: Wallet,
-    connection: Connection
+    wallet: WalletType,
+    connection: ConnectionType
   ): Promise<void>;
 }
 
@@ -41,4 +41,14 @@ export interface DevelepmentFramework extends Framework {
   ): Program<Idl>;
 
   getConnection(): Connection;
+
+  convertEthAddress2Solana(ethAddress: string): PublicKey;
+}
+
+export interface WalletType extends Wallet {
+  set publicKey(key: PublicKey);
+}
+
+export interface ConnectionType extends Connection {
+  updateWallet(wallet: WalletType, signer: Signer): Promise<void>;
 }

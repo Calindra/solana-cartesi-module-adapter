@@ -1,9 +1,10 @@
-import { AnchorProvider, Wallet } from '@project-serum/anchor';
-import { ConfirmOptions, Connection } from '@solana/web3.js';
-import { Signer } from 'ethers';
+import { type Wallet } from '@project-serum/anchor';
+import { AnchorProvider } from '@project-serum/anchor';
+import { type ConfirmOptions, type Connection } from '@solana/web3.js';
+import { type Signer } from 'ethers';
 
 export class AnchorProviderAdapter extends AnchorProvider {
-  constructor(
+  public constructor(
     connection: Connection,
     wallet: Wallet,
     opts: ConfirmOptions,

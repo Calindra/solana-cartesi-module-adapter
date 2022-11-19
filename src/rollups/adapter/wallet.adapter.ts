@@ -1,7 +1,8 @@
-import { Wallet } from '@project-serum/anchor';
-import { Keypair, Transaction, PublicKey } from '@solana/web3.js';
+import { type PublicKey, type Transaction } from '@solana/web3.js';
+import { Keypair } from '@solana/web3.js';
+import { type WalletType } from '../../types/Framework';
 
-export class AdaptedWallet implements Wallet {
+export class AdaptedWallet implements WalletType {
   public payer = Keypair.fromSecretKey(
     Uint8Array.from([
       121, 122, 251, 173, 123, 1, 141, 44, 75, 160, 11, 107, 14, 238, 24, 175,
@@ -10,13 +11,17 @@ export class AdaptedWallet implements Wallet {
       172, 150, 196, 4, 59, 219, 216, 77, 34, 176, 132, 80, 157, 198, 198,
     ])
   );
-  signTransaction(tx: Transaction): Promise<Transaction> {
+  public signTransaction(tx: Transaction): Promise<Transaction> {
     throw new Error('Method not implemented.');
   }
-  signAllTransactions(txs: Transaction[]): Promise<Transaction[]> {
+  public signAllTransactions(txs: Transaction[]): Promise<Transaction[]> {
     throw new Error('Method not implemented.');
   }
-  get publicKey(): PublicKey {
+  public get publicKey(): PublicKey {
     throw new Error('Method not implemented.');
+  }
+
+  public setPublicKey(publicKey: PublicKey): void {
+    // this._publicKey = publicKey;
   }
 }

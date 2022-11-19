@@ -1,25 +1,35 @@
-import { Idl, Program, Wallet } from '@project-serum/anchor';
-import { PublicKey, Connection, clusterApiUrl } from '@solana/web3.js';
-import { Signer } from 'ethers';
-import type {
-  DevelepmentFramework,
-  Workspace,
-  WorkspaceArgs,
-  WorkspaceShared,
+import { type Idl } from '@project-serum/anchor';
+import { Program } from '@project-serum/anchor';
+import { type Connection, type PublicKey } from '@solana/web3.js';
+import { clusterApiUrl } from '@solana/web3.js';
+import { type Signer } from 'ethers';
+import { Buffer } from 'node:buffer';
+import {
+  type ConnectionType,
+  type DevelepmentFramework,
+  type WalletType,
+  type Workspace,
+  type WorkspaceArgs,
+  type WorkspaceShared,
 } from '../types/Framework';
 import { AnchorProviderAdapter } from './adapter/anchorProvider.adapter';
 import { ConnectionAdapter } from './adapter/connection.adapter';
 import { AdaptedWallet } from './adapter/wallet.adapter';
 
 export default class Rollups implements DevelepmentFramework {
-  getConnection(): Connection {
+  public convertEthAddress2Solana(ethAddress: string): PublicKey {
+    const bytes = Buffer.from(ethAddress.slice(2, 34), 'hex');
+    throw new Error('Method not implemented.');
+    // const sol32 = Buffer.concat([Buffer.alloc(12), bytes]);
+  }
+  public getConnection(): Connection {
     const network = clusterApiUrl('devnet');
     return new ConnectionAdapter(network, Rollups.COMMITMENT);
   }
   /** @todo this dont hit on solana blockchain */
-  static readonly COMMITMENT = 'processed';
+  private static readonly COMMITMENT = 'processed';
 
-  getProvider(signer?: Signer): WorkspaceShared {
+  public getProvider(signer?: Signer): WorkspaceShared {
     const connection = this.getConnection();
     const wallet = new AdaptedWallet();
     const provider = new AnchorProviderAdapter(
@@ -33,24 +43,32 @@ export default class Rollups implements DevelepmentFramework {
 
     return { connection, provider, wallet };
   }
-  getPublicKey(idl: Idl): PublicKey {
+  public getPublicKey(idl: Idl): PublicKey {
     throw new Error('Method not implemented.');
   }
-  generateProgram(
+  public generateProgram(
     idl: Idl,
     programId: PublicKey,
     provider: WorkspaceShared
   ): Program<Idl> {
     throw new Error('Method not implemented.');
   }
-  onWalletConnected(
+  public async onWalletConnected(
     signer: Signer,
-    wallet: Wallet,
-    connection: Connection
+    wallet: WalletType,
+    connection: ConnectionType
   ): Promise<void> {
-    throw new Error('Method not implemented.');
+    await Promise.all([
+      signer.getAddress().then((ethAddress) => {
+        wallet.publicKey = this.convertEthAddress2Solana(ethAddress);
+      }),
+      connection.updateWallet(wallet, signer),
+    ]);
   }
-  getWorkspace<T extends Idl>({ idl, signer }: WorkspaceArgs<T>): Workspace<T> {
+  public getWorkspace<T extends Idl>({
+    idl,
+    signer,
+  }: WorkspaceArgs<T>): Workspace<T> {
     const { connection, provider, wallet } = this.getProvider(signer);
     const programId = this.getPublicKey(idl);
     const program = new Program<T>(idl, programId, provider);
