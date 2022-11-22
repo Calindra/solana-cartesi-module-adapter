@@ -1,16 +1,16 @@
-import { type Idl } from '@project-serum/anchor';
+import { Idl } from '@project-serum/anchor';
 import { Program } from '@project-serum/anchor';
-import { type Connection, PublicKey } from '@solana/web3.js';
+import { Connection, PublicKey } from '@solana/web3.js';
 import { clusterApiUrl } from '@solana/web3.js';
-import { type Signer } from 'ethers';
+import { Signer } from 'ethers';
 import { Buffer } from 'node:buffer';
 import {
-  type ConnectionType,
-  type DevelepmentFramework,
-  type WalletType,
-  type Workspace,
-  type WorkspaceArgs,
-  type WorkspaceShared,
+  ConnectionType,
+  DevelepmentFramework,
+  WalletType,
+  Workspace,
+  WorkspaceArgs,
+  WorkspaceShared,
 } from '../types/Framework';
 import { AnchorProviderAdapter } from './adapter/anchorProvider.adapter';
 import { ConnectionAdapter } from './adapter/connection.adapter';
@@ -34,7 +34,7 @@ export default class Rollups implements DevelepmentFramework {
 
   public getProvider(signer?: Signer): WorkspaceShared {
     const connection = this.getConnection();
-    const wallet = new AdaptedWallet();
+    const wallet: WalletType = new AdaptedWallet();
     const provider = new AnchorProviderAdapter(
       connection,
       wallet,

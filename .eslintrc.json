@@ -22,12 +22,14 @@
     "@typescript-eslint/consistent-type-imports": [
       "error",
       {
-        "prefer": "type-imports",
-        "fixStyle": "inline-type-imports"
+        "prefer": "no-type-imports"
       }
     ],
     "@typescript-eslint/explicit-member-accessibility": "error",
     "@typescript-eslint/explicit-function-return-type": "error",
-    "@typescript-eslint/explicit-module-boundary-types": "error"
+    "@typescript-eslint/explicit-module-boundary-types": "error",
+    "no-magic-numbers": "off",
+    "@typescript-eslint/no-magic-numbers": "warn",
+    "no-console": "warn",
   }
 }

@@ -1,11 +1,11 @@
+import { AnchorProvider, Idl, Program, Wallet } from '@project-serum/anchor';
 import {
-  type AnchorProvider,
-  type Idl,
-  type Program,
-  type Wallet,
-} from '@project-serum/anchor';
-import { type Connection, type PublicKey } from '@solana/web3.js';
-import { type Signer } from 'ethers';
+  Commitment,
+  Connection,
+  PublicKey,
+  Transaction,
+} from '@solana/web3.js';
+import { Signer } from 'ethers';
 
 export interface WorkspaceShared {
   provider: AnchorProvider;
@@ -40,10 +40,24 @@ export interface DevelepmentFramework extends Framework {
   convertEthAddress2Solana(ethAddress: string): PublicKey;
 }
 
-export interface WalletType extends Wallet {
-  set publicKey(key: PublicKey);
+export interface CustomTransaction extends Transaction {
+  _serialize?(signData: Buffer): Buffer;
 }
 
+export interface WalletType extends Wallet {
+  set publicKey(key: PublicKey);
+  signTransaction<TR extends Transaction>(tx: TR): Promise<Transaction>;
+  signAllTransactions<TR extends Transaction>(
+    txs: TR[]
+  ): Promise<Transaction[]>;
+}
 export interface ConnectionType extends Connection {
+  etherSigner?: Signer;
+  wallet?: WalletType;
+
+  getBalance(publicKey: PublicKey, commitment?: Commitment): Promise<number>;
+
   updateWallet(wallet: WalletType, signer: Signer): Promise<void>;
+
+  getInspectBaseURL(): string;
 }

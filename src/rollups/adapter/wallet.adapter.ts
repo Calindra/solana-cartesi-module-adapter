@@ -1,6 +1,7 @@
-import { type PublicKey, type Transaction } from '@solana/web3.js';
-import { Keypair } from '@solana/web3.js';
-import { type WalletType } from '../../types/Framework';
+import { Keypair, type PublicKey, type Transaction } from '@solana/web3.js';
+import { Buffer } from 'node:buffer';
+import { type CustomTransaction, type WalletType } from '../../types/Framework';
+import logger from '../utils/Logger';
 
 export class AdaptedWallet implements WalletType {
   public readonly payer = Keypair.fromSecretKey(
@@ -11,13 +12,53 @@ export class AdaptedWallet implements WalletType {
       172, 150, 196, 4, 59, 219, 216, 77, 34, 176, 132, 80, 157, 198, 198,
     ])
   );
-  public signTransaction(tx: Transaction): Promise<Transaction> {
-    throw new Error('Method not implemented.');
+
+  public set publicKey(key: PublicKey) {
+    this.publicKey = key;
   }
-  public signAllTransactions(txs: Transaction[]): Promise<Transaction[]> {
-    throw new Error('Method not implemented.');
+
+  private getMsgBase58(tx: Transaction): string[] {
+    const msg = tx.compileMessage();
+    const msgBase58 = msg.accountKeys.map((key) => key.toBase58());
+
+    logger.debug(msgBase58);
+
+    return msgBase58;
   }
-  public get publicKey(): PublicKey {
-    throw new Error('Method not implemented.');
+
+  private resetSignature(tx: Transaction): Buffer {
+    const signature = Buffer.alloc(64);
+    tx.addSignature(this.payer.publicKey, signature);
+    return signature;
+  }
+
+  private changeSerialize(tx: CustomTransaction): void {
+    tx.serialize = function (): Buffer {
+      const signData = this.serializeMessage();
+      if (this._serialize) {
+        return this._serialize(signData);
+      }
+
+      throw new TypeError('Invalid transaction');
+    };
+  }
+
+  public async signTransaction(tx: CustomTransaction): Promise<Transaction> {
+    logger.debug('signTransaction...');
+
+    await Promise.all([
+      this.getMsgBase58(tx),
+      this.resetSignature(tx),
+      this.changeSerialize(tx),
+    ]);
+
+    return tx;
+  }
+  public async signAllTransactions(
+    txs: CustomTransaction[]
+  ): Promise<Transaction[]> {
+    const result = await Promise.all(txs.map((tx) => this.signTransaction(tx)));
+
+    return result;
   }
 }
