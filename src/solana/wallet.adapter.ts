@@ -1,6 +1,6 @@
 import { Keypair, type PublicKey, type Transaction } from '@solana/web3.js';
 import { Buffer } from 'node:buffer';
-import { type CustomTransaction, type WalletType } from '../../types/Framework';
+import { type CustomTransaction, type WalletType } from '../types/Framework';
 import logger from '../utils/Logger';
 
 export class AdaptedWallet implements WalletType {

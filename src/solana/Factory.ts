@@ -12,9 +12,9 @@ import {
   WorkspaceArgs,
   WorkspaceShared,
 } from '../types/Framework';
-import { AnchorProviderAdapter } from './adapter/anchorProvider.adapter';
-import { ConnectionAdapter } from './adapter/connection.adapter';
-import { AdaptedWallet } from './adapter/wallet.adapter';
+import { AnchorProviderAdapter } from './anchorProvider.adapter';
+import { ConnectionAdapter } from './connection.adapter';
+import { AdaptedWallet } from './wallet.adapter';
 
 export default class Rollups implements DevelepmentFramework {
   public convertEthAddress2Solana(ethAddress: string): PublicKey {

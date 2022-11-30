@@ -7,6 +7,6 @@ function sum(a: number, b: number): number {
 
 describe('rollups', () => {
   it('should return the sum of two numbers', () => {
-    assert.strictEqual(sum(1, 2), 3);
+    assert.strictEqual(sum(1, 2), 2);
   });
 });
