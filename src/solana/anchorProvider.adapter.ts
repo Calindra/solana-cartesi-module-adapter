@@ -4,11 +4,11 @@ import { type ConfirmOptions, type Connection } from '@solana/web3.js';
 import { type Signer } from 'ethers';
 
 export class AnchorProviderAdapter extends AnchorProvider {
+  public signer?: Signer
   public constructor(
     connection: Connection,
     wallet: Wallet,
     opts: ConfirmOptions,
-    public readonly signer?: Signer
   ) {
     super(connection, wallet, opts);
   }
