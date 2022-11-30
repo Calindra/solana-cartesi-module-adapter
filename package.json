@@ -12,6 +12,7 @@
     "build": "tsc",
     "start": "node --inspect --watch --loader ts-node/esm ./src/main.ts",
     "m:test": "TS_NODE_COMPILER_OPTIONS='{\"module\": \"commonjs\" }' mocha",
+    "test:ci": "npm run m:test -- --forbid-only",
     "test": "node --test --test-only --loader ts-node/esm test/index.test.ts",
     "m:test:watch": "nodemon -e ts,json --exec \"npm run m:test\"",
     "test:watch": "node --watch --loader ts-node/esm src/index.test.ts",
