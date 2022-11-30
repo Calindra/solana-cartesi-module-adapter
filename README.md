@@ -3,3 +3,5 @@
 src/rollups Cartesi Only
 
 src/solana Adapters for Solana
+
+https://semver.org/

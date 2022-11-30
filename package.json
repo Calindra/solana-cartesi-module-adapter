@@ -6,12 +6,11 @@
   "engines": {
     "node": ">=14.0.0"
   },
-  "type--removed-to-run-tests": "module",
   "scripts": {
     "prepack": "rm -rf ./dist && npm run build",
     "build": "tsc",
     "start": "node --inspect --watch --loader ts-node/esm ./src/main.ts",
-    "m:test": "TS_NODE_COMPILER_OPTIONS='{\"module\": \"commonjs\" }' mocha",
+    "m:test": "mocha",
     "test:ci": "npm run m:test -- --forbid-only",
     "test": "node --test --test-only --loader ts-node/esm test/index.test.ts",
     "m:test:watch": "nodemon -e ts,json --exec \"npm run m:test\"",

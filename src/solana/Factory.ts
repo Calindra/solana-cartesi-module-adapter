@@ -16,7 +16,7 @@ import { AnchorProviderAdapter } from './anchorProvider.adapter';
 import { ConnectionAdapter } from './connection.adapter';
 import { AdaptedWallet } from './wallet.adapter';
 
-export default class Rollups implements DevelepmentFramework {
+export default class Factory implements DevelepmentFramework {
   public convertEthAddress2Solana(ethAddress: string): PublicKey {
     const bytes = Buffer.from(ethAddress.slice(2), 'hex');
     const sol32bytes = Buffer.concat([bytes, Buffer.alloc(12)]);
@@ -27,7 +27,7 @@ export default class Rollups implements DevelepmentFramework {
   }
   public getConnection(): Connection {
     const network = clusterApiUrl('devnet');
-    return new ConnectionAdapter(network, Rollups.COMMITMENT);
+    return new ConnectionAdapter(network, Factory.COMMITMENT);
   }
   /** @todo this dont hit on solana blockchain */
   private static readonly COMMITMENT = 'processed';
@@ -39,7 +39,7 @@ export default class Rollups implements DevelepmentFramework {
       connection,
       wallet,
       {
-        commitment: Rollups.COMMITMENT,
+        commitment: Factory.COMMITMENT,
       },
       signer
     );
