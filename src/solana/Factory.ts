@@ -12,11 +12,13 @@ import {
   WorkspaceArgs,
   WorkspaceShared,
 } from '../types/Framework';
-import { AnchorProviderAdapter } from './adapter/anchorProvider.adapter';
-import { ConnectionAdapter } from './adapter/connection.adapter';
-import { AdaptedWallet } from './adapter/wallet.adapter';
+import { AnchorProviderAdapter } from './anchorProvider.adapter';
+import { ConnectionAdapter } from './connection.adapter';
+import { AdaptedWallet } from './wallet.adapter';
 
-export default class Rollups implements DevelepmentFramework {
+export default class Factory implements DevelepmentFramework {
+  private connection?: Connection;
+  private workspaceShared?: WorkspaceShared; 
   public convertEthAddress2Solana(ethAddress: string): PublicKey {
     const bytes = Buffer.from(ethAddress.slice(2), 'hex');
     const sol32bytes = Buffer.concat([bytes, Buffer.alloc(12)]);
@@ -26,26 +28,35 @@ export default class Rollups implements DevelepmentFramework {
     return pubKey;
   }
   public getConnection(): Connection {
+    if (this.connection) {
+      return this.connection
+    }
     const network = clusterApiUrl('devnet');
-    return new ConnectionAdapter(network, Rollups.COMMITMENT);
+    this.connection = new ConnectionAdapter(network, Factory.COMMITMENT);
+    return this.connection;
   }
   /** @todo this dont hit on solana blockchain */
   private static readonly COMMITMENT = 'processed';
 
   public getProvider(signer?: Signer): WorkspaceShared {
+    if (this.workspaceShared) {
+      const providerAdapted = this.workspaceShared.provider as AnchorProviderAdapter;
+      providerAdapted.signer = signer
+      return this.workspaceShared;
+    }
     const connection = this.getConnection();
     const wallet: WalletType = new AdaptedWallet();
     const provider = new AnchorProviderAdapter(
       connection,
       wallet,
       {
-        commitment: Rollups.COMMITMENT,
+        commitment: Factory.COMMITMENT,
       },
-      signer
     );
-
-    return { connection, provider, wallet };
+    this.workspaceShared = { connection, provider, wallet };
+    return this.workspaceShared;
   }
+
   public getPublicKey(idl: Idl): PublicKey {
     const metadata: unknown = idl.metadata;
 
@@ -63,16 +74,18 @@ export default class Rollups implements DevelepmentFramework {
   }
   public async onWalletConnected(
     signer: Signer,
-    wallet: WalletType,
-    connection: ConnectionType
   ): Promise<void> {
+    const { connection, wallet } = this.getProvider(signer);
+    const adaptedWallet = wallet as AdaptedWallet;
+    const adaptedConnection = connection as ConnectionAdapter
     await Promise.all([
       signer.getAddress().then((ethAddress) => {
-        wallet.publicKey = this.convertEthAddress2Solana(ethAddress);
+        adaptedWallet.publicKey = this.convertEthAddress2Solana(ethAddress);
       }),
-      connection.updateWallet(wallet, signer),
+      adaptedConnection.updateWallet(wallet, signer),
     ]);
   }
+
   public getWorkspace<T extends Idl>({
     idl,
     signer,

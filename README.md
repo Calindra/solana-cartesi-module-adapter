@@ -1,1 +1,7 @@
-# solana-module-adapter
+# Solana Cartesi Web3 Adapter
+
+src/rollups Cartesi Only
+
+src/solana Adapters for Solana
+
+https://semver.org/

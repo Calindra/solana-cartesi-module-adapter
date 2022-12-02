@@ -34,14 +34,16 @@ async function fromDir(startPath: string, filter: RegExp): Promise<string[]> {
 
   return filesWithSubfiles;
 }
+//; (async () => {
+  const filter = /^.+\.test\.ts$/g;
+  const pathForTest = path.resolve('.');
 
-const filter = /^.+\.test\.ts$/g;
-const pathForTest = path.resolve('./src');
+  const files = await fromDir(pathForTest, filter);
 
-const files = await fromDir(pathForTest, filter);
+  run({
+    concurrency: true,
+    files,
+    timeout: 10000,
+  }).pipe(process.stdout);
+//})
 
-run({
-  concurrency: true,
-  files,
-  timeout: 10000,
-}).pipe(process.stdout);

@@ -10,8 +10,7 @@ import {
   TransactionSignature,
 } from '@solana/web3.js';
 import { Signer, utils as ethersUtils } from 'ethers';
-import { AccountInfoResponse } from '../../types/Connection';
-import { ConnectionType, WalletType } from '../../types/Framework';
+import { ConnectionType, WalletType } from '../types/Framework';
 import logger from '../utils/Logger';
 
 export class ConnectionAdapter extends Connection implements ConnectionType {
