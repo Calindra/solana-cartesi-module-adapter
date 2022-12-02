@@ -3,6 +3,7 @@ import { cartesiRollups } from '../utils/cartesi';
 import { InputAddedEvent } from "@cartesi/rollups/dist/src/types/contracts/interfaces/IInput";
 import {
   AccountInfo,
+  clusterApiUrl,
   Commitment,
   Connection,
   GetAccountInfoConfig,
@@ -17,8 +18,10 @@ import {
 import { ContractReceipt, Signer, utils as ethersUtils, ethers } from 'ethers';
 import { ConnectionType, WalletType } from '../types/Framework';
 import logger from '../utils/Logger';
+import { InputFacet } from '@cartesi/rollups';
+import { Config } from '../types/Config';
 
-export const DEFAULT_GRAPHQL_URL = `${process.env.VUE_APP_CARTESI_GRAPHQL_URL}`;
+export const DEFAULT_GRAPHQL_URL = `${process.env.CARTESI_GRAPHQL_URL}`;
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -50,11 +53,16 @@ export function signTransaction(tx: Transaction, pubkey: PublicKey) {
 }
 
 export class ConnectionAdapter extends Connection implements ConnectionType {
+  constructor(private config: Config) {
+    const network = clusterApiUrl('devnet');
+    super(network)
+  }
   public getInspectBaseURL(): string {
     throw new Error('Method not implemented.');
   }
   public etherSigner?: Signer;
   public wallet?: WalletType;
+  public inputContract?: InputFacet;
 
   /**
    * @todo check here
@@ -67,6 +75,18 @@ export class ConnectionAdapter extends Connection implements ConnectionType {
     };
 
     return Promise.resolve(resultFake);
+  }
+
+  async getInputContract() {
+    if (this.inputContract) {
+      return this.inputContract;
+    }
+    if (!this.etherSigner) {
+      throw new Error('Signer is undefined');
+    }
+    const { inputContract } = await cartesiRollups(this.etherSigner);
+    this.inputContract = inputContract;
+    return inputContract;
   }
 
   async sendTransaction(
@@ -103,7 +123,7 @@ export class ConnectionAdapter extends Connection implements ConnectionType {
     logger.debug('Cartesi Rollups payload', payload);
     const inputBytes = ethers.utils.toUtf8Bytes(payload);
 
-    const { inputContract } = await cartesiRollups(this.etherSigner);
+    const inputContract = await this.getInputContract();
 
     // send transaction
     const txEth = await inputContract.addInput(inputBytes);
@@ -111,14 +131,12 @@ export class ConnectionAdapter extends Connection implements ConnectionType {
     logger.debug("waiting for confirmation...");
     const receipt = await txEth.wait(1);
     logger.debug('receipt ok');
-    const inputReportResults = await pollingReportResults(receipt);
+    const inputReportResults = await pollingReportResults(receipt, this.config.graphqlURL);
     logger.debug({ inputReportResults })
     if (inputReportResults?.find((report: any) => report.json.error)) {
       throw new Error('Unexpected error');
     }
-
-    // TODO: dummy
-    return "z3U6bsqf2RypqPYsng5mne5mBoQbrsUnT7RWyGuUz76ssq21QbmLrjh7Am6urSdceqhCWdp2CzJShEG2JB4aqcA";
+    return txEth.hash;
   }
 
   public updateWallet(wallet: WalletType, signer: Signer): Promise<void> {
@@ -209,14 +227,14 @@ export class ConnectionAdapter extends Connection implements ConnectionType {
   // }
 }
 
-export async function pollingReportResults(receipt: ContractReceipt) {
+export async function pollingReportResults(receipt: ContractReceipt, graphqlURL: string) {
   const MAX_REQUESTS = 10;
   const inputKeys = getInputKeys(receipt);
   console.log(`InputKeys: ${JSON.stringify(inputKeys, null, 4)}`);
   for (let i = 0; i < MAX_REQUESTS; i++) {
     await delay(1000 * (i + 1));
-    const reports = await getReports(DEFAULT_GRAPHQL_URL, inputKeys);
-    console.log(`Cartesi reports: ${JSON.stringify(reports, null, 4)}`);
+    const reports = await getReports(graphqlURL, inputKeys);
+    console.log(`Cartesi reports ${graphqlURL}: ${JSON.stringify(reports, null, 4)}`);
     if (reports.length > 0) {
       return reports.map((r: any) => {
         const strJson = ethers.utils.toUtf8String(r.payload);

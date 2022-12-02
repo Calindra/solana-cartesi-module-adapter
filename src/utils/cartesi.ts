@@ -33,7 +33,7 @@ const contractAddress = '0xA17BE28F84C89474831261854686a6357B7B9c1E';
  export const cartesiRollups = async (
     provider: Provider | Signer
 ): Promise<Contracts> => {
-    console.log(`connect to contracts address=${contractAddress}`);
+    console.log(`Connect to contracts address=${contractAddress}`);
     const inputContract = InputFacet__factory.connect(contractAddress, provider);
     const outputContract = OutputFacet__factory.connect(contractAddress, provider);
     const erc20Portal = ERC20PortalFacet__factory.connect(contractAddress, provider);

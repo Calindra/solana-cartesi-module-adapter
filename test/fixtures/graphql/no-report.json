@@ -1,0 +1,18 @@
+{
+    "data": null,
+    "errors": [
+        {
+            "message": "Unable to find input with index=1 from epoch index=1",
+            "locations": [
+                {
+                    "line": 3,
+                    "column": 5
+                }
+            ],
+            "path": [
+                "epoch",
+                "input"
+            ]
+        }
+    ]
+}

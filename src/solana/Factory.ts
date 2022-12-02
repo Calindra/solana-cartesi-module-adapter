@@ -4,6 +4,7 @@ import { Connection, PublicKey } from '@solana/web3.js';
 import { clusterApiUrl } from '@solana/web3.js';
 import { Signer } from 'ethers';
 import { Buffer } from 'node:buffer';
+import { Config } from '../types/Config';
 import {
   ConnectionType,
   DevelepmentFramework,
@@ -17,6 +18,9 @@ import { ConnectionAdapter } from './connection.adapter';
 import { AdaptedWallet } from './wallet.adapter';
 
 export default class Factory implements DevelepmentFramework {
+  constructor(private config: Config) {
+
+  }
   private connection?: Connection;
   private workspaceShared?: WorkspaceShared; 
   public convertEthAddress2Solana(ethAddress: string): PublicKey {
@@ -31,8 +35,7 @@ export default class Factory implements DevelepmentFramework {
     if (this.connection) {
       return this.connection
     }
-    const network = clusterApiUrl('devnet');
-    this.connection = new ConnectionAdapter(network, Factory.COMMITMENT);
+    this.connection = new ConnectionAdapter(this.config);
     return this.connection;
   }
   /** @todo this dont hit on solana blockchain */

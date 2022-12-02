@@ -35,10 +35,6 @@ export type PartialReport = Pick<
     input: PartialInput;
 };
 
-const console = {
-    log: (..._args: any[]) => {}
-};
-
 // define a type predicate to filter out reports
 const isPartialReport = (n: PartialReport | null): n is PartialReport =>
     n !== null;
@@ -53,12 +49,12 @@ export const getReports = async (
     url: string,
     inputKeys: InputKeys
 ): Promise<PartialReport[]> => {
-    // create GraphQL client to reader server
+    console.debug('create GraphQL client to reader server');
     const client = createClient({ url, exchanges: defaultExchanges, fetch });
 
     // query the GraphQL server for reports corresponding to the input keys
     console.log(
-        `querying ${url} for reports of ${JSON.stringify(inputKeys)}...`
+        `Querying ${url} for reports of ${JSON.stringify(inputKeys)}...`
     );
 
     if (
@@ -72,6 +68,9 @@ export const getReports = async (
                 input_index: inputKeys.input_index,
             })
             .toPromise();
+        if (error?.networkError) {
+            throw error;
+        }
         if (data?.epoch?.input?.reports) {
             return data.epoch.input.reports.nodes.filter(
                 isPartialReport

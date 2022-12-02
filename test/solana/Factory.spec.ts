@@ -2,12 +2,14 @@ import { AnchorProviderAdapter } from '../../src/solana/anchorProvider.adapter';
 import { expect } from 'chai';
 import Factory from '../../src/solana/Factory';
 import { ConnectionAdapter } from '../../src/solana/connection.adapter';
+import { FakeFactory } from '../FakeFactory';
 
 describe('Factory', ()  => {
   let factory: Factory;
 
   beforeEach(() => {
-    factory = new Factory()
+    const config = FakeFactory.getConfig();
+    factory = new Factory(config);
   })
 
   it('should create a connection', () => {
@@ -27,7 +29,6 @@ describe('Factory', ()  => {
     const adaptedProvider = provider as AnchorProviderAdapter
     const signer = {} as any
     factory.onWalletConnected(signer);
-
     expect(adaptedProvider.signer).not.to.be.undefined;
   })
 })

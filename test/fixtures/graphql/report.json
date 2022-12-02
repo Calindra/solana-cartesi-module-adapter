@@ -1,0 +1,29 @@
+{
+    "data": {
+        "epoch": {
+            "input": {
+                "reports": {
+                    "nodes": [
+                        {
+                            "id": "5",
+                            "index": 0,
+                            "payload": "0x7b226f6b223a317d",
+                            "input": {
+                                "index": 1,
+                                "epoch": {
+                                    "index": 1,
+                                    "__typename": "Epoch"
+                                },
+                                "__typename": "Input"
+                            },
+                            "__typename": "Report"
+                        }
+                    ],
+                    "__typename": "ReportConnection"
+                },
+                "__typename": "Input"
+            },
+            "__typename": "Epoch"
+        }
+    }
+}
