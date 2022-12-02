@@ -13,8 +13,14 @@ export class AdaptedWallet implements WalletType {
     ])
   );
 
+  private _publicKey: PublicKey = this.payer.publicKey;
+
   public set publicKey(key: PublicKey) {
-    this.publicKey = key;
+    this._publicKey = key;
+  }
+
+  public get publicKey() {
+    return this._publicKey;
   }
 
   private getMsgBase58(tx: Transaction): string[] {
