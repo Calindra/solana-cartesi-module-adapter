@@ -1,6 +1,6 @@
 import { InputFacet } from "@cartesi/rollups"
 import { BigNumber, BytesLike, ContractTransaction, Overrides } from "ethers"
-import { Config } from "../src/types/Config"
+import { CartesiConfig } from "../src/types/CartesiConfig"
 import sinon from 'sinon';
 
 type AddInputType = {
@@ -15,7 +15,7 @@ export interface InputFacetSinon extends InputFacet {
 }
 
 export class FakeFactory {
-    static getConfig(): Config {
+    static getConfig(): CartesiConfig {
         return {
             report: { maxRetry: 10, baseDelay: 1 },
             graphqlURL: 'http://localhost:4000/graphql',

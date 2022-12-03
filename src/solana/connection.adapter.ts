@@ -22,7 +22,7 @@ import { Signer, utils as ethersUtils, ethers, BytesLike } from 'ethers';
 import { ConnectionType, WalletType } from '../types/Framework';
 import logger from '../utils/Logger';
 import { InputFacet } from '@cartesi/rollups';
-import { Config } from '../types/Config';
+import { CartesiConfig } from '../types/CartesiConfig';
 import { AccountInfoResponse } from '../types/Connection';
 import { CartesiAccountInfoData } from '../types/CartesiAccountInfoData';
 
@@ -46,7 +46,7 @@ export function signTransaction(tx: Transaction, pubkey: PublicKey) {
 }
 
 export class ConnectionAdapter extends Connection implements ConnectionType {
-  constructor(private config: Config) {
+  constructor(private config: CartesiConfig) {
     const network = clusterApiUrl('devnet');
     super(network)
   }
@@ -146,7 +146,7 @@ export class ConnectionAdapter extends Connection implements ConnectionType {
     const receipt = await txEth.wait(1);
     logger.debug('receipt ok');
     const inputReportResults = await pollingReportResults(receipt, this.config);
-    logger.debug({ inputReportResults })
+    logger.debug(`inputReportResults = ${JSON.stringify(inputReportResults, null, 4)}`)
     if (inputReportResults?.find((report: any) => report.json.error)) {
       throw new Error('Unexpected error');
     }

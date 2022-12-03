@@ -1,12 +1,10 @@
 import { Idl } from '@project-serum/anchor';
 import { Program } from '@project-serum/anchor';
 import { Connection, PublicKey } from '@solana/web3.js';
-import { clusterApiUrl } from '@solana/web3.js';
 import { Signer } from 'ethers';
 import { Buffer } from 'node:buffer';
-import { Config } from '../types/Config';
+import { CartesiConfig } from '../types/CartesiConfig';
 import {
-  ConnectionType,
   DevelepmentFramework,
   WalletType,
   Workspace,
@@ -18,7 +16,7 @@ import { ConnectionAdapter } from './connection.adapter';
 import { AdaptedWallet } from './wallet.adapter';
 
 export default class Factory implements DevelepmentFramework {
-  constructor(private config: Config) {
+  constructor(private config: CartesiConfig) {
 
   }
   private connection?: Connection;
