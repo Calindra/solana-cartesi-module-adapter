@@ -6,7 +6,6 @@
   "engines": {
     "node": ">=14.0.0"
   },
-  "type-x": "module",
   "scripts": {
     "prepack": "rm -rf ./dist && npm run build",
     "build": "tsc",
@@ -38,6 +37,7 @@
     "@types/chai": "^4.3.4",
     "@types/mocha": "^9.1.0",
     "@types/node": "^18.11.9",
+    "@types/sinon": "^10.0.13",
     "@typescript-eslint/eslint-plugin": "^5.43.0",
     "@typescript-eslint/parser": "^5.43.0",
     "chai": "^4.3.7",
@@ -50,6 +50,7 @@
     "mocha": "^10.1.0",
     "nock": "^13.2.9",
     "nodemon": "^2.0.20",
+    "sinon": "^15.0.0",
     "solidity-coverage": "^0.8.2",
     "ts-node": "^10.9.1",
     "typechain": "^8.1.1",

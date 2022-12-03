@@ -7,6 +7,7 @@ import {
   Commitment,
   Connection,
   GetAccountInfoConfig,
+  GetProgramAccountsConfig,
   PublicKey,
   RpcResponseAndContext,
   SendOptions,
@@ -15,11 +16,14 @@ import {
   Transaction,
   TransactionSignature,
 } from '@solana/web3.js';
-import { ContractReceipt, Signer, utils as ethersUtils, ethers } from 'ethers';
+import fetch from "cross-fetch";
+import { ContractReceipt, Signer, utils as ethersUtils, ethers, BytesLike } from 'ethers';
 import { ConnectionType, WalletType } from '../types/Framework';
 import logger from '../utils/Logger';
 import { InputFacet } from '@cartesi/rollups';
 import { Config } from '../types/Config';
+import { AccountInfoResponse } from '../types/Connection';
+import { CartesiAccountInfoData } from '../types/CartesiAccountInfoData';
 
 export const DEFAULT_GRAPHQL_URL = `${process.env.CARTESI_GRAPHQL_URL}`;
 
@@ -57,9 +61,11 @@ export class ConnectionAdapter extends Connection implements ConnectionType {
     const network = clusterApiUrl('devnet');
     super(network)
   }
+
   public getInspectBaseURL(): string {
-    throw new Error('Method not implemented.');
+    return this.config.inspectURL;
   }
+
   public etherSigner?: Signer;
   public wallet?: WalletType;
   public inputContract?: InputFacet;
@@ -107,9 +113,9 @@ export class ConnectionAdapter extends Connection implements ConnectionType {
       }
     }
     tx.feePayer = this.wallet.publicKey;
-    tx.recentBlockhash = (
-      await this.getRecentBlockhash(options.preflightCommitment)
-    ).blockhash;
+
+    // it doesn't matter for Cartesi
+    tx.recentBlockhash = 'JAnZtVsDWxSJNmpg4cLgTrrDRMVT48droqtWdEHnY141';
 
     tx = await this.wallet.signTransaction(tx);
 
@@ -131,7 +137,7 @@ export class ConnectionAdapter extends Connection implements ConnectionType {
     logger.debug("waiting for confirmation...");
     const receipt = await txEth.wait(1);
     logger.debug('receipt ok');
-    const inputReportResults = await pollingReportResults(receipt, this.config.graphqlURL);
+    const inputReportResults = await pollingReportResults(receipt, this.config);
     logger.debug({ inputReportResults })
     if (inputReportResults?.find((report: any) => report.json.error)) {
       throw new Error('Unexpected error');
@@ -152,89 +158,84 @@ export class ConnectionAdapter extends Connection implements ConnectionType {
     return Promise.all(promises);
   }
 
-  // public async getAccountInfo(publicKey: PublicKey): Promise<AccountInfo<Buffer> | null> {
-  //   const baseURL = this.getInspectBaseURL();
+  private async clientHttpGet<T>(url: string) {
+    const urlx = new URL(url);
+    const response = await fetch(urlx, {
+      method: 'GET',
+      headers: {
+        Accept: 'application/json',
+      },
+    });
+    return await response.json() as T;
+  }
 
-  //   const url = new URL(`${baseURL}/accountInfo/${publicKey.toBase58()}`);
+  private parseBytesLikeToKeyAndAccountInfo(payload: BytesLike): { key: string, account: AccountInfo<Buffer> } | null {
+    try {
+      const jsonString = ethersUtils.toUtf8String(payload);
+      const infoData = JSON.parse(jsonString) as CartesiAccountInfoData;
+      return {
+        key: infoData.key,
+        account: {
+          owner: new PublicKey(infoData.owner),
+          data: Buffer.from(infoData.data, 'base64'),
+          executable: false, // pode ser que seja executavel
+          lamports: +infoData.lamports,
+        }
+      };
+    } catch (error) {
+      console.error(error);
+      return null;
+    }
+  }
 
-  //   logger.info('Cartesi inspect url', url);
-  //   const response = await fetch(url, {
-  //     method: 'GET',
-  //     headers: {
-  //       Accept: 'application/json',
-  //     },
-  //   });
-  //   const resp = (await response.json()) as AccountInfoResponse;
-  //   const cartesiResponse = resp;
-  //   if (!Array.isArray(cartesiResponse.reports) || !cartesiResponse.reports.length) {
-  //     //console.log('Fallback to solana getAccountInfo')
-  //     //return super.getAccountInfo(publicKey, commitmentOrConfig);
-  //     return null;
-  //   }
-  //   const [firstReport] = cartesiResponse.reports;
+  public async getAccountInfo(publicKey: PublicKey): Promise<AccountInfo<Buffer> | null> {
+    const baseURL = this.getInspectBaseURL();
+    const url = `${baseURL}/accountInfo/${publicKey.toBase58()}`;
+    const cartesiResponse = await this.clientHttpGet<AccountInfoResponse>(url);
+    if (!Array.isArray(cartesiResponse.reports) || !cartesiResponse.reports.length) {
+      return null;
+    }
+    const [firstReport] = cartesiResponse.reports;
+    return this.parseBytesLikeToKeyAndAccountInfo(firstReport.payload)?.account ?? null;
+  }
 
-  //   try {
-  //     const jsonString = ethersUtils.toUtf8String(firstReport.payload);
-  //     const infoData = JSON.parse(jsonString) as Record<string, unknown>;
-  //     // console.log({ [publicKey.toBase58()]: infoData })
-  //     return {
-  //       owner: new PublicKey(infoData.owner),
-  //       data: Buffer.from(infoData.data, 'base64'),
-  //       executable: false, // pode ser que seja executavel
-  //       lamports: +infoData.lamports,
-  //     };
-  //   } catch (error) {
-  //     console.error(error);
-  //     return null;
-  //   }
-  // }
+  public async getProgramAccounts(
+    programId: PublicKey,
+    _configOrCommitment?: GetProgramAccountsConfig | Commitment
+  ): Promise<
+    Array<{
+      pubkey: PublicKey;
+      account: AccountInfo<Buffer>;
+    }>
+  > {
+    const baseURL = this.getInspectBaseURL();
+    const url = `${baseURL}/programAccounts/${programId.toBase58()}`;
+    console.log('Cartesi inspect url', url);
 
-  // public async getProgramAccounts(
-  //   programId: PublicKey,
-  //   _configOrCommitment?: GetProgramAccountsConfig | Commitment
-  // ): Promise<
-  //   Array<{
-  //     pubkey: PublicKey;
-  //     account: AccountInfo<Buffer>;
-  //   }>
-  // > {
-  //   const baseURL = this.getInspectBaseURL();
-  //   const url = `${baseURL}/programAccounts/${programId.toBase58()}`;
-  //   console.log('Cartesi inspect url', url);
-  //   const resp = await axios.get(url.toString());
-  //   const cartesiResponse = resp.data;
-  //   if (!cartesiResponse.reports || !cartesiResponse.reports.length) {
-  //     //console.log('Fallback to solana getAccountInfo')
-  //     //return super.getAccountInfo(publicKey, commitmentOrConfig);
-  //     return [];
-  //   }
-  //   const accounts = cartesiResponse.reports.map((report) => {
-  //     const jsonString = ethers.utils.toUtf8String(report.payload);
-  //     const infoData = JSON.parse(jsonString);
-  //     // console.log({ [publicKey.toBase58()]: infoData })
-  //     return {
-  //       pubkey: new PublicKey(infoData.key),
-  //       account: {
-  //         owner: new PublicKey(infoData.owner),
-  //         data: Buffer.from(infoData.data, 'base64'),
-  //         executable: false, // pode ser que seja executavel
-  //         lamports: +infoData.lamports,
-  //       },
-  //     };
-  //   });
+    const cartesiResponse = await this.clientHttpGet<AccountInfoResponse>(url.toString());
+    if (!cartesiResponse.reports || !cartesiResponse.reports.length) {
+      // fallback?
+      return [];
+    }
+    const accounts = cartesiResponse.reports.map(report => {
+      return this.parseBytesLikeToKeyAndAccountInfo(report.payload);
+    }).filter(a => !!a).map(obj => {
+      return {
+        pubkey: new PublicKey(obj!.key),
+        account: obj!.account
+      }
+    })
 
-  //   return accounts;
-  // }
+    return accounts;
+  }
 }
 
-export async function pollingReportResults(receipt: ContractReceipt, graphqlURL: string) {
-  const MAX_REQUESTS = 10;
+export async function pollingReportResults(receipt: ContractReceipt, config: Config) {
+  const MAX_REQUESTS = config.report.maxRetry;
   const inputKeys = getInputKeys(receipt);
-  console.log(`InputKeys: ${JSON.stringify(inputKeys, null, 4)}`);
   for (let i = 0; i < MAX_REQUESTS; i++) {
-    await delay(1000 * (i + 1));
-    const reports = await getReports(graphqlURL, inputKeys);
-    console.log(`Cartesi reports ${graphqlURL}: ${JSON.stringify(reports, null, 4)}`);
+    await delay(config.report.baseDelay * (i + 1));
+    const reports = await getReports(config.graphqlURL, inputKeys);
     if (reports.length > 0) {
       return reports.map((r: any) => {
         const strJson = ethers.utils.toUtf8String(r.payload);

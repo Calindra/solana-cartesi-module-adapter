@@ -1,5 +1,11 @@
 
 
 export interface Config {
-    graphqlURL: string,
+    inspectURL: string;
+    graphqlURL: string;
+
+    report: {
+        maxRetry: number
+        baseDelay: number
+    }
 }

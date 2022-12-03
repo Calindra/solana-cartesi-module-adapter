@@ -9,7 +9,7 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 
-import { createClient, defaultExchanges } from "@urql/core";
+import { Client, createClient, defaultExchanges } from "@urql/core";
 import fetch from "cross-fetch";
 import {
     ReportsDocument,
@@ -39,6 +39,15 @@ export type PartialReport = Pick<
 const isPartialReport = (n: PartialReport | null): n is PartialReport =>
     n !== null;
 
+let client: Client
+function getGraphQLClient(url: string) {
+    if (client) {
+        return client
+    }
+    console.debug('Create GraphQL client to reader server');
+    return client = createClient({ url, exchanges: defaultExchanges, fetch });
+}
+
 /**
  * Queries a GraphQL server for reports based on input keys
  * @param url URL of the GraphQL server
@@ -49,8 +58,7 @@ export const getReports = async (
     url: string,
     inputKeys: InputKeys
 ): Promise<PartialReport[]> => {
-    console.debug('create GraphQL client to reader server');
-    const client = createClient({ url, exchanges: defaultExchanges, fetch });
+    const client = getGraphQLClient(url);
 
     // query the GraphQL server for reports corresponding to the input keys
     console.log(
@@ -123,7 +131,7 @@ export const getReports = async (
  */
 export const getReport = async (url: string, id: string): Promise<Report> => {
     // create GraphQL client to reader server
-    const client = createClient({ url, exchanges: defaultExchanges, fetch });
+    const client = getGraphQLClient(url);
 
     // query the GraphQL server for the report
     console.log(`querying ${url} for report "${id}"...`);
