@@ -13,6 +13,7 @@ import {
   SendOptions,
   SerializeConfig,
   SignatureResult,
+  SystemProgram,
   Transaction,
   TransactionSignature,
 } from '@solana/web3.js';
@@ -42,7 +43,7 @@ export const toBuffer = (arr: Buffer | Uint8Array | Array<number>): Buffer => {
 export function signTransaction(tx: Transaction, pubkey: PublicKey) {
   logger.debug('signTransaction...')
   const msg = tx.compileMessage()
-  console.log(msg.accountKeys.map(k => k.toBase58()))
+  logger.debug(msg.accountKeys.map(k => k.toBase58()))
 
   // just fill the signature bytes
   const signature = Buffer.alloc(64);
@@ -149,8 +150,18 @@ export class ConnectionAdapter extends Connection implements ConnectionType {
     throw new Error('Method not implemented.');
   }
 
-  public requestAirdrop(toPubkey: PublicKey, lamports: number): Promise<TransactionSignature> {
-    throw new Error('Method not implemented.');
+  public async requestAirdrop(toPubkey: PublicKey, lamports: number): Promise<TransactionSignature> {
+    // Public Key that give me SOL on devnet
+    // https://explorer.solana.com/tx/4aTCJyxNstBdxEJmH2CiTeBghMusTQ66ox7iGPMARSUoiKjBCsAvKwAuJa2kcAn2kJuyCpc9pyrhfTwZs8Zkfn6r?cluster=devnet
+    const fromPubkey = new PublicKey("9B5XszUGdMaxCZ7uSQhPzdks5ZQSmWxrmzCSvtJ6Ns6g");
+    const transaction = new Transaction().add(
+      SystemProgram.transfer({
+        fromPubkey,
+        toPubkey,
+        lamports
+      })
+    )
+    return await this.sendTransaction(transaction, []);
   }
 
   public getMultipleAccountsInfo(publicKeys: PublicKey[]): Promise<(AccountInfo<Buffer> | null)[]> {
@@ -183,12 +194,12 @@ export class ConnectionAdapter extends Connection implements ConnectionType {
         }
       };
     } catch (error) {
-      console.error(error);
+      logger.error(error);
       return null;
     }
   }
 
-  public async getAccountInfo(publicKey: PublicKey): Promise<AccountInfo<Buffer> | null> {
+  public async getAccountInfo(publicKey: PublicKey, _commitmentOrConfig?: Commitment | GetAccountInfoConfig): Promise<AccountInfo<Buffer> | null> {
     const baseURL = this.getInspectBaseURL();
     const url = `${baseURL}/accountInfo/${publicKey.toBase58()}`;
     const cartesiResponse = await this.clientHttpGet<AccountInfoResponse>(url);
@@ -210,7 +221,7 @@ export class ConnectionAdapter extends Connection implements ConnectionType {
   > {
     const baseURL = this.getInspectBaseURL();
     const url = `${baseURL}/programAccounts/${programId.toBase58()}`;
-    console.log('Cartesi inspect url', url);
+    logger.debug('Cartesi inspect url', url);
 
     const cartesiResponse = await this.clientHttpGet<AccountInfoResponse>(url.toString());
     if (!cartesiResponse.reports || !cartesiResponse.reports.length) {
@@ -228,6 +239,12 @@ export class ConnectionAdapter extends Connection implements ConnectionType {
 
     return accounts;
   }
+
+  public async getBalance(publicKey: PublicKey, commitment?: Commitment | undefined): Promise<number> {
+    const accountInfo = await this.getAccountInfo(publicKey, commitment);
+    return accountInfo?.lamports || 0;
+  }
+
 }
 
 export async function pollingReportResults(receipt: ContractReceipt, config: Config) {
