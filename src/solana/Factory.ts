@@ -20,7 +20,7 @@ export default class Factory implements DevelepmentFramework {
 
   }
   private connection?: Connection;
-  private workspaceShared?: WorkspaceShared; 
+  private workspaceShared?: WorkspaceShared;
   public convertEthAddress2Solana(ethAddress: string): PublicKey {
     const bytes = Buffer.from(ethAddress.slice(2), 'hex');
     const sol32bytes = Buffer.concat([bytes, Buffer.alloc(12)]);
@@ -29,32 +29,35 @@ export default class Factory implements DevelepmentFramework {
     const pubKey = PublicKey.decode(sol32bytes) as PublicKey;
     return pubKey;
   }
+
+  public createConnection(): Connection {
+    return new ConnectionAdapter(this.config);
+  }
+
   public getConnection(): Connection {
     if (this.connection) {
       return this.connection
     }
-    this.connection = new ConnectionAdapter(this.config);
+    this.connection = this.createConnection();
     return this.connection;
   }
-  /** @todo this dont hit on solana blockchain */
-  private static readonly COMMITMENT = 'processed';
 
-  public getProvider(signer?: Signer): WorkspaceShared {
-    if (this.workspaceShared) {
-      const providerAdapted = this.workspaceShared.provider as AnchorProviderAdapter;
-      providerAdapted.signer = signer
-      return this.workspaceShared;
-    }
+  public createWorkspaceWithoutProgram(_signer?: Signer): WorkspaceShared {
     const connection = this.getConnection();
     const wallet: WalletType = new AdaptedWallet();
     const provider = new AnchorProviderAdapter(
       connection,
       wallet,
-      {
-        commitment: Factory.COMMITMENT,
-      },
+      {},
     );
-    this.workspaceShared = { connection, provider, wallet };
+    return { connection, provider, wallet };
+  }
+
+  public getOrCreateWorkspaceWithoutProgram(signer?: Signer): WorkspaceShared {
+    if (this.workspaceShared) {
+      return this.workspaceShared;
+    }
+    this.workspaceShared = this.createWorkspaceWithoutProgram(signer);
     return this.workspaceShared;
   }
 
@@ -76,7 +79,7 @@ export default class Factory implements DevelepmentFramework {
   public async onWalletConnected(
     signer: Signer,
   ): Promise<void> {
-    const { connection, wallet } = this.getProvider(signer);
+    const { connection, wallet } = this.getOrCreateWorkspaceWithoutProgram(signer);
     const adaptedWallet = wallet as AdaptedWallet;
     const adaptedConnection = connection as ConnectionAdapter
     await Promise.all([
@@ -91,7 +94,7 @@ export default class Factory implements DevelepmentFramework {
     idl,
     signer,
   }: WorkspaceArgs<T>): Workspace<T> {
-    const { connection, provider, wallet } = this.getProvider(signer);
+    const { connection, provider, wallet } = this.getOrCreateWorkspaceWithoutProgram(signer);
     const programId = this.getPublicKey(idl);
     const program = new Program<T>(idl, programId, provider);
 

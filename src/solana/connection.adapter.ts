@@ -153,8 +153,8 @@ export class ConnectionAdapter extends Connection implements ConnectionType {
     return txEth.hash;
   }
 
-  public updateWallet(wallet: WalletType, signer: Signer): Promise<void> {
-    throw new Error('Method not implemented.');
+  public async updateWallet(wallet: WalletType, signer: Signer): Promise<void> {
+    this.etherSigner = signer
   }
 
   public async requestAirdrop(toPubkey: PublicKey, lamports: number): Promise<TransactionSignature> {
