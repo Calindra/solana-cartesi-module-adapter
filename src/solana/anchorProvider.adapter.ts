@@ -1,6 +1,9 @@
 import { AnchorProvider } from '@project-serum/anchor';
-import { type Signer } from 'ethers';
-
+import { ConfirmOptions, Signer, Transaction, TransactionSignature } from '@solana/web3.js';
 export class AnchorProviderAdapter extends AnchorProvider {
-  public signer?: Signer
+
+  public sendAndConfirm(tx: Transaction, signers?: Signer[], opts?: ConfirmOptions): Promise<TransactionSignature> {
+    return this.connection.sendTransaction(tx, signers ?? [], opts)
+  }
+
 }

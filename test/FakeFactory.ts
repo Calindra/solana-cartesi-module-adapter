@@ -2,6 +2,9 @@ import { InputFacet } from "@cartesi/rollups"
 import { BigNumber, BytesLike, ContractTransaction, Overrides } from "ethers"
 import { CartesiConfig } from "../src/types/CartesiConfig"
 import sinon from 'sinon';
+import { ConnectionAdapter } from "../src/solana/connection.adapter";
+import { AdaptedWallet } from "../src/solana/wallet.adapter";
+import { ethers } from "hardhat";
 
 type AddInputType = {
     (_input: BytesLike, overrides?: Overrides & {
@@ -44,5 +47,23 @@ export class FakeFactory {
         return {
             addInput
         } as unknown as InputFacetSinon
+    }
+
+    static createConnection() {
+        let config = FakeFactory.getConfig()
+        let connection = new ConnectionAdapter(config)
+        return connection;
+    }
+
+    static async connectWallet(connection: ConnectionAdapter) {
+        const inputContract = FakeFactory.createInputContract();
+        let wallet = new AdaptedWallet();
+        const [signer] = await ethers.getSigners();
+        connection.etherSigner = signer;
+        connection.wallet = wallet;
+        connection.inputContract = inputContract;
+        return {
+            inputContract
+        }
     }
 }

@@ -38,15 +38,11 @@ describe('ConnectionAdapter', () => {
                 .reply(200, require('./fixtures/getRecentBlockHash.json'))
         })
         it('should send transaction to Cartesi InputContract', async () => {
-            const [signer] = await ethers.getSigners();
-            let transaction = new Transaction();
-            let wallet = new AdaptedWallet();
-            let fromKeypair = Keypair.generate();
-            let toKeypair = Keypair.generate();
-            const inputContract = FakeFactory.createInputContract();
-            connection.etherSigner = signer;
-            connection.wallet = wallet;
-            connection.inputContract = inputContract;
+            const { inputContract } = await FakeFactory.connectWallet(connection);
+
+            const transaction = new Transaction();
+            const fromKeypair = Keypair.generate();
+            const toKeypair = Keypair.generate();
             transaction.add(
                 SystemProgram.transfer({
                     fromPubkey: fromKeypair.publicKey,
