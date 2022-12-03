@@ -4,17 +4,17 @@ import { expect } from "chai";
 import nock from "nock";
 import { AnchorProviderAdapter } from "../../src/solana/anchorProvider.adapter"
 import { ConnectionAdapter } from "../../src/solana/connection.adapter";
-import { AdaptedWallet } from "../../src/solana/wallet.adapter";
+import { WalletAdapter } from "../../src/solana/wallet.adapter";
 import { FakeFactory } from "../FakeFactory";
 
 describe('AnchorProviderAdapter', () => {
     let connection: ConnectionAdapter
-    let wallet: AdaptedWallet
+    let wallet: WalletAdapter
     let provider: AnchorProviderAdapter
 
     beforeEach(() => {
         connection = FakeFactory.createConnection();
-        wallet = new AdaptedWallet();
+        wallet = new WalletAdapter();
         provider = new AnchorProviderAdapter(connection, wallet, {});
     })
 

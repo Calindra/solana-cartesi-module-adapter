@@ -26,25 +26,6 @@ import { CartesiConfig } from '../types/CartesiConfig';
 import { AccountInfoResponse } from '../types/Connection';
 import { CartesiAccountInfoData } from '../types/CartesiAccountInfoData';
 
-export function signTransaction(tx: Transaction, pubkey: PublicKey) {
-  logger.debug('signTransaction...')
-  const msg = tx.compileMessage()
-  logger.debug(msg.accountKeys.map(k => k.toBase58()))
-
-  // We decided to trust the msg_sender that comes in the metadata payload of the smart contract inside the Cartesi Machine
-  // This way the user doesn't need to interact twice with the MetaMask. The first one to sign the payload and the other one to send.
-  // Just fill the signature bytes
-  const signature = Buffer.alloc(64);
-
-  tx.addSignature(pubkey, signature);
-
-  tx.serialize = function (_config?: SerializeConfig): Buffer {
-    const signData = this.serializeMessage();
-    return (this as any)._serialize(signData);
-  }
-  return tx;
-}
-
 export class ConnectionAdapter extends Connection implements ConnectionType {
   constructor(private config: CartesiConfig) {
     const network = clusterApiUrl('devnet');

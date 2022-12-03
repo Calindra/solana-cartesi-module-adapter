@@ -13,7 +13,7 @@ import {
 } from '../types/Framework';
 import { AnchorProviderAdapter } from './anchorProvider.adapter';
 import { ConnectionAdapter } from './connection.adapter';
-import { AdaptedWallet } from './wallet.adapter';
+import { WalletAdapter } from './wallet.adapter';
 
 export default class Factory implements DevelepmentFramework {
   constructor(private config: CartesiConfig) {
@@ -44,7 +44,7 @@ export default class Factory implements DevelepmentFramework {
 
   public createWorkspaceWithoutProgram(_signer?: Signer): WorkspaceShared {
     const connection = this.getConnection();
-    const wallet: WalletType = new AdaptedWallet();
+    const wallet: WalletType = new WalletAdapter();
     const provider = new AnchorProviderAdapter(
       connection,
       wallet,
@@ -80,7 +80,7 @@ export default class Factory implements DevelepmentFramework {
     signer: Signer,
   ): Promise<void> {
     const { connection, wallet } = this.getOrCreateWorkspaceWithoutProgram(signer);
-    const adaptedWallet = wallet as AdaptedWallet;
+    const adaptedWallet = wallet as WalletAdapter;
     const adaptedConnection = connection as ConnectionAdapter
     await Promise.all([
       signer.getAddress().then((ethAddress) => {

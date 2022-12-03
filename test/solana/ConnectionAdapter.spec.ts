@@ -1,4 +1,4 @@
-import { AdaptedWallet } from "../../src/solana/wallet.adapter";
+import { WalletAdapter } from "../../src/solana/wallet.adapter";
 import { Keypair, LAMPORTS_PER_SOL, PublicKey, SystemProgram, Transaction } from "@solana/web3.js";
 import { expect } from "chai";
 import { ConnectionAdapter } from "../../src/solana/connection.adapter";
@@ -93,7 +93,7 @@ describe('ConnectionAdapter', () => {
         })
         it('should call the input contract to transfer the $sol to do the airdrop', async () => {
             const [signer] = await ethers.getSigners();
-            let wallet = new AdaptedWallet();
+            let wallet = new WalletAdapter();
             let toKeypair = Keypair.generate();
             const inputContract = FakeFactory.createInputContract();
             connection.etherSigner = signer;
