@@ -1,6 +1,4 @@
-import { getReports } from '../graphql/reports';
-import { cartesiRollups } from '../utils/cartesi';
-import { InputAddedEvent } from "@cartesi/rollups/dist/src/types/contracts/interfaces/IInput";
+import { cartesiRollups, pollingReportResults, toBuffer } from '../utils/cartesi';
 import {
   AccountInfo,
   clusterApiUrl,
@@ -16,9 +14,11 @@ import {
   SystemProgram,
   Transaction,
   TransactionSignature,
+  VersionedTransaction,
+  Signer as SolanaSigner,
 } from '@solana/web3.js';
 import fetch from "cross-fetch";
-import { ContractReceipt, Signer, utils as ethersUtils, ethers, BytesLike } from 'ethers';
+import { Signer, utils as ethersUtils, ethers, BytesLike } from 'ethers';
 import { ConnectionType, WalletType } from '../types/Framework';
 import logger from '../utils/Logger';
 import { InputFacet } from '@cartesi/rollups';
@@ -26,26 +26,14 @@ import { Config } from '../types/Config';
 import { AccountInfoResponse } from '../types/Connection';
 import { CartesiAccountInfoData } from '../types/CartesiAccountInfoData';
 
-export const DEFAULT_GRAPHQL_URL = `${process.env.CARTESI_GRAPHQL_URL}`;
-
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
-export const toBuffer = (arr: Buffer | Uint8Array | Array<number>): Buffer => {
-  if (Buffer.isBuffer(arr)) {
-    return arr;
-  } else if (arr instanceof Uint8Array) {
-    return Buffer.from(arr.buffer, arr.byteOffset, arr.byteLength);
-  } else {
-    return Buffer.from(arr);
-  }
-};
-
 export function signTransaction(tx: Transaction, pubkey: PublicKey) {
   logger.debug('signTransaction...')
   const msg = tx.compileMessage()
   logger.debug(msg.accountKeys.map(k => k.toBase58()))
 
-  // just fill the signature bytes
+  // We decided to trust the msg_sender that comes in the metadata payload of the smart contract inside the Cartesi Machine
+  // This way the user doesn't need to interact twice with the MetaMask. The first one to sign the payload and the other one to send.
+  // Just fill the signature bytes
   const signature = Buffer.alloc(64);
 
   tx.addSignature(pubkey, signature);
@@ -84,7 +72,7 @@ export class ConnectionAdapter extends Connection implements ConnectionType {
     return Promise.resolve(resultFake);
   }
 
-  async getInputContract() {
+  private async getInputContract() {
     if (this.inputContract) {
       return this.inputContract;
     }
@@ -97,11 +85,23 @@ export class ConnectionAdapter extends Connection implements ConnectionType {
   }
 
   async sendTransaction(
-    tx: any,
-    _signers: any,
+    transaction: VersionedTransaction | Transaction,
+    signersOrOptions?: Array<SolanaSigner> | SendOptions,
     options?: SendOptions,
   ): Promise<TransactionSignature> {
     logger.debug('sending transaction from adapter');
+    if ('version' in transaction) {
+      if (signersOrOptions && Array.isArray(signersOrOptions)) {
+        throw new Error('Invalid arguments');
+      }
+
+      const wireTransaction = transaction.serialize();
+      return await this.sendRawTransaction(wireTransaction, options);
+    }
+
+    if (signersOrOptions === undefined || !Array.isArray(signersOrOptions)) {
+      throw new Error('Invalid arguments');
+    }
     if (!this.wallet) {
       throw new Error('Wallet is undefined');
     }
@@ -113,20 +113,27 @@ export class ConnectionAdapter extends Connection implements ConnectionType {
         preflightCommitment: this.commitment
       }
     }
-    tx.feePayer = this.wallet.publicKey;
+    transaction.feePayer = this.wallet.publicKey;
 
     // it doesn't matter for Cartesi
-    tx.recentBlockhash = 'JAnZtVsDWxSJNmpg4cLgTrrDRMVT48droqtWdEHnY141';
+    transaction.recentBlockhash = 'JAnZtVsDWxSJNmpg4cLgTrrDRMVT48droqtWdEHnY141';
 
-    tx = await this.wallet.signTransaction(tx);
+    transaction = await this.wallet.signTransaction(transaction);
 
-    // aqui deveriamos possibilitar assinar dado o par de chaves
+    // We decided to work with only one signature
     // (signers ?? []).forEach((kp) => {
     //     tx.partialSign(kp);
     // });
 
-    const rawTx = tx.serialize();
-    const payload = toBuffer(rawTx).toString('base64');
+    const rawTx = transaction.serialize();
+    return await this.sendRawTransaction(rawTx, options);
+  }
+
+  async sendRawTransaction(
+    rawTransaction: Buffer | Uint8Array | Array<number>,
+    _options?: SendOptions,
+  ): Promise<TransactionSignature> {
+    const payload = toBuffer(rawTransaction).toString('base64');
     logger.debug('Cartesi Rollups payload', payload);
     const inputBytes = ethers.utils.toUtf8Bytes(payload);
 
@@ -246,49 +253,3 @@ export class ConnectionAdapter extends Connection implements ConnectionType {
   }
 
 }
-
-export async function pollingReportResults(receipt: ContractReceipt, config: Config) {
-  const MAX_REQUESTS = config.report.maxRetry;
-  const inputKeys = getInputKeys(receipt);
-  for (let i = 0; i < MAX_REQUESTS; i++) {
-    await delay(config.report.baseDelay * (i + 1));
-    const reports = await getReports(config.graphqlURL, inputKeys);
-    if (reports.length > 0) {
-      return reports.map((r: any) => {
-        const strJson = ethers.utils.toUtf8String(r.payload);
-        return {
-          ...r,
-          json: JSON.parse(strJson)
-        };
-      })
-    }
-  }
-}
-
-
-export type InputKeys = {
-  epoch_index?: number;
-  input_index?: number;
-};
-
-/**
-* Retrieve InputKeys from an InputAddedEvent
-* @param receipt Blockchain transaction receipt
-* @returns input identification keys
-*/
-export const getInputKeys = (receipt: ContractReceipt): InputKeys => {
-  // get InputAddedEvent from transaction receipt
-  const event = receipt.events?.find((e) => e.event === "InputAdded");
-
-  if (!event) {
-    throw new Error(
-      `InputAdded event not found in receipt of transaction ${receipt.transactionHash}`
-    );
-  }
-
-  const inputAdded = event as InputAddedEvent;
-  return {
-    epoch_index: inputAdded.args.epochNumber.toNumber(),
-    input_index: inputAdded.args.inputIndex.toNumber(),
-  };
-};
