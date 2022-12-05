@@ -16,6 +16,7 @@ import { ConnectionAdapter } from './connection.adapter';
 import { WalletAdapter } from './wallet.adapter';
 
 export default class Factory implements DevelepmentFramework {
+  createProgram: any;
   constructor(private config: CartesiConfig) {
 
   }

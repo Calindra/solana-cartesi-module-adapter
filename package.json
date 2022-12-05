@@ -9,6 +9,7 @@
   "scripts": {
     "prepack": "rm -rf ./dist && npm run build",
     "build": "tsc",
+    "prettier": "prettier --write",
     "start": "node --inspect --watch --loader ts-node/esm ./src/main.ts",
     "m:test": "hardhat test",
     "test:ci": "npm run m:test",
