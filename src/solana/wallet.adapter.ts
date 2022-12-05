@@ -1,5 +1,5 @@
-import { Keypair, SerializeConfig, type PublicKey, type Transaction } from '@solana/web3.js';
-import { Buffer } from 'node:buffer';
+import { Keypair, type PublicKey, type Transaction } from '@solana/web3.js';
+import { Buffer } from 'buffer';
 import { type CustomTransaction, type WalletType } from '../types/Framework';
 import logger from '../utils/Logger';
 

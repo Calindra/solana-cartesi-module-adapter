@@ -22,7 +22,8 @@ export class FakeFactory {
         return {
             report: { maxRetry: 10, baseDelay: 1 },
             graphqlURL: 'http://localhost:4000/graphql',
-            inspectURL: 'http://localhost:5005/inspect'
+            inspectURL: 'http://localhost:5005/inspect',
+            contractAddress: '0xA17BE28F84C89474831261854686a6357B7B9c1E',
         }
     }
 

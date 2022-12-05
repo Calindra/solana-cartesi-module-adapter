@@ -2,7 +2,7 @@ import { Idl } from '@project-serum/anchor';
 import { Program } from '@project-serum/anchor';
 import { Connection, PublicKey } from '@solana/web3.js';
 import { Signer } from 'ethers';
-import { Buffer } from 'node:buffer';
+import { Buffer } from 'buffer';
 import { CartesiConfig } from '../types/CartesiConfig';
 import {
   DevelepmentFramework,

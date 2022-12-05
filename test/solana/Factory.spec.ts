@@ -32,4 +32,12 @@ describe('Factory', ()  => {
     await factory.onWalletConnected(signer);
     expect(connectionAdapter.etherSigner).not.to.be.undefined;
   })
+
+  it('should set the wallet', async () => {
+    const { connection } = factory.getOrCreateWorkspaceWithoutProgram()
+    const connectionAdapter = connection as ConnectionAdapter
+    const [signer] = await ethers.getSigners()
+    await factory.onWalletConnected(signer);
+    expect(connectionAdapter.wallet).not.to.be.undefined;
+  })
 })

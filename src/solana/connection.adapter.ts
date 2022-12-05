@@ -60,7 +60,7 @@ export class ConnectionAdapter extends Connection implements ConnectionType {
     if (!this.etherSigner) {
       throw new Error('Signer is undefined');
     }
-    const { inputContract } = await cartesiRollups(this.etherSigner);
+    const { inputContract } = await cartesiRollups(this.etherSigner, this.config.contractAddress);
     this.inputContract = inputContract;
     return inputContract;
   }
@@ -136,6 +136,7 @@ export class ConnectionAdapter extends Connection implements ConnectionType {
 
   public async updateWallet(wallet: WalletType, signer: Signer): Promise<void> {
     this.etherSigner = signer
+    this.wallet = wallet
   }
 
   public async requestAirdrop(toPubkey: PublicKey, lamports: number): Promise<TransactionSignature> {
