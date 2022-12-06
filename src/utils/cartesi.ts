@@ -12,6 +12,7 @@ import { InputAddedEvent } from "@cartesi/rollups/dist/src/types/contracts/inter
 
 import { CartesiConfig } from "../types/CartesiConfig";
 import { getReports, InputKeys } from "../graphql/reports";
+import { PublicKey } from "@solana/web3.js";
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -97,3 +98,22 @@ export const toBuffer = (arr: Buffer | Uint8Array | Array<number>): Buffer => {
     return Buffer.from(arr);
   }
 };
+
+export function convertEthAddress2Solana(ethAddress: string): PublicKey {
+  const bytes = Buffer.from(ethAddress.slice(2), 'hex');
+  const sol32bytes = Buffer.concat([bytes, Buffer.alloc(12)]);
+
+  /** exist space to put byte to recover public key original */
+  const pubKey = PublicKey.decode(sol32bytes) as PublicKey;
+  return pubKey;
+}
+
+export function convertSolanaAddress2Eth(pubkey: PublicKey) {
+  const buffer = pubkey.toBuffer();
+  const eth20bytes: number[] = [];
+  for (let i = buffer.length - 1; i > 11; i--) {
+      eth20bytes.push(buffer[i]);
+  }
+  const recoveredAddress = ethers.utils.hexValue(eth20bytes);
+  return recoveredAddress;
+}

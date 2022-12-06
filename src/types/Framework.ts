@@ -36,8 +36,6 @@ export interface DevelepmentFramework extends Framework {
   getPublicKey(idl: Idl): PublicKey;
 
   getConnection(): Connection;
-
-  convertEthAddress2Solana(ethAddress: string): PublicKey;
 }
 
 export interface CustomTransaction extends Transaction {

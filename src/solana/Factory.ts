@@ -14,6 +14,7 @@ import {
 import { AnchorProviderAdapter } from './anchorProvider.adapter';
 import { ConnectionAdapter } from './connection.adapter';
 import { WalletAdapter } from './wallet.adapter';
+import { convertEthAddress2Solana } from '../utils/cartesi';
 
 export default class Factory implements DevelepmentFramework {
   createProgram: any;
@@ -22,14 +23,6 @@ export default class Factory implements DevelepmentFramework {
   }
   private connection?: Connection;
   private workspaceShared?: WorkspaceShared;
-  public convertEthAddress2Solana(ethAddress: string): PublicKey {
-    const bytes = Buffer.from(ethAddress.slice(2), 'hex');
-    const sol32bytes = Buffer.concat([bytes, Buffer.alloc(12)]);
-
-    /** exist space to put byte to recover public key original */
-    const pubKey = PublicKey.decode(sol32bytes) as PublicKey;
-    return pubKey;
-  }
 
   public createConnection(): Connection {
     return new ConnectionAdapter(this.config);
@@ -85,7 +78,7 @@ export default class Factory implements DevelepmentFramework {
     const adaptedConnection = connection as ConnectionAdapter
     await Promise.all([
       signer.getAddress().then((ethAddress) => {
-        adaptedWallet.publicKey = this.convertEthAddress2Solana(ethAddress);
+        adaptedWallet.publicKey = convertEthAddress2Solana(ethAddress);
       }),
       adaptedConnection.updateWallet(wallet, signer),
     ]);
