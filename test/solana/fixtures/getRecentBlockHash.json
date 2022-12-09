@@ -1,0 +1,16 @@
+{
+    "jsonrpc": "2.0",
+    "result": {
+        "context": {
+            "apiVersion": "1.13.5",
+            "slot": 179454023
+        },
+        "value": {
+            "blockhash": "JAnZtVsDWxSJNmpg4cLgTrrDRMVT48droqtWdEHnY141",
+            "feeCalculator": {
+                "lamportsPerSignature": 5000
+            }
+        }
+    },
+    "id": "493d138b-0158-4a96-8e1a-c203c0efc3d8"
+}

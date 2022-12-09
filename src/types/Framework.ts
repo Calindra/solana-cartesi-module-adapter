@@ -32,12 +32,10 @@ export interface Framework {
 }
 
 export interface DevelepmentFramework extends Framework {
-  getProvider(signer?: Signer): WorkspaceShared;
+  getOrCreateWorkspaceWithoutProgram(signer?: Signer): WorkspaceShared;
   getPublicKey(idl: Idl): PublicKey;
 
   getConnection(): Connection;
-
-  convertEthAddress2Solana(ethAddress: string): PublicKey;
 }
 
 export interface CustomTransaction extends Transaction {

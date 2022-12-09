@@ -2,3 +2,7 @@
 /dist/test/
 /src/
 /*.tgz
+/hardhat.config.*
+/.vscode
+/.github
+/cache/

@@ -1,11 +1,10 @@
 import { Idl } from '@project-serum/anchor';
 import { Program } from '@project-serum/anchor';
 import { Connection, PublicKey } from '@solana/web3.js';
-import { clusterApiUrl } from '@solana/web3.js';
 import { Signer } from 'ethers';
-import { Buffer } from 'node:buffer';
+import { Buffer } from 'buffer';
+import { CartesiConfig } from '../types/CartesiConfig';
 import {
-  ConnectionType,
   DevelepmentFramework,
   WalletType,
   Workspace,
@@ -14,46 +13,45 @@ import {
 } from '../types/Framework';
 import { AnchorProviderAdapter } from './anchorProvider.adapter';
 import { ConnectionAdapter } from './connection.adapter';
-import { AdaptedWallet } from './wallet.adapter';
+import { WalletAdapter } from './wallet.adapter';
+import { convertEthAddress2Solana } from '../utils/cartesi';
 
 export default class Factory implements DevelepmentFramework {
-  private connection?: Connection;
-  private workspaceShared?: WorkspaceShared; 
-  public convertEthAddress2Solana(ethAddress: string): PublicKey {
-    const bytes = Buffer.from(ethAddress.slice(2), 'hex');
-    const sol32bytes = Buffer.concat([bytes, Buffer.alloc(12)]);
+  createProgram: any;
+  constructor(private config: CartesiConfig) {
 
-    /** exist space to put byte to recover public key original */
-    const pubKey = PublicKey.decode(sol32bytes) as PublicKey;
-    return pubKey;
   }
+  private connection?: Connection;
+  private workspaceShared?: WorkspaceShared;
+
+  public createConnection(): Connection {
+    return new ConnectionAdapter(this.config);
+  }
+
   public getConnection(): Connection {
     if (this.connection) {
       return this.connection
     }
-    const network = clusterApiUrl('devnet');
-    this.connection = new ConnectionAdapter(network, Factory.COMMITMENT);
+    this.connection = this.createConnection();
     return this.connection;
   }
-  /** @todo this dont hit on solana blockchain */
-  private static readonly COMMITMENT = 'processed';
 
-  public getProvider(signer?: Signer): WorkspaceShared {
-    if (this.workspaceShared) {
-      const providerAdapted = this.workspaceShared.provider as AnchorProviderAdapter;
-      providerAdapted.signer = signer
-      return this.workspaceShared;
-    }
+  public createWorkspaceWithoutProgram(_signer?: Signer): WorkspaceShared {
     const connection = this.getConnection();
-    const wallet: WalletType = new AdaptedWallet();
+    const wallet: WalletType = new WalletAdapter();
     const provider = new AnchorProviderAdapter(
       connection,
       wallet,
-      {
-        commitment: Factory.COMMITMENT,
-      },
+      {},
     );
-    this.workspaceShared = { connection, provider, wallet };
+    return { connection, provider, wallet };
+  }
+
+  public getOrCreateWorkspaceWithoutProgram(signer?: Signer): WorkspaceShared {
+    if (this.workspaceShared) {
+      return this.workspaceShared;
+    }
+    this.workspaceShared = this.createWorkspaceWithoutProgram(signer);
     return this.workspaceShared;
   }
 
@@ -75,12 +73,12 @@ export default class Factory implements DevelepmentFramework {
   public async onWalletConnected(
     signer: Signer,
   ): Promise<void> {
-    const { connection, wallet } = this.getProvider(signer);
-    const adaptedWallet = wallet as AdaptedWallet;
+    const { connection, wallet } = this.getOrCreateWorkspaceWithoutProgram(signer);
+    const adaptedWallet = wallet as WalletAdapter;
     const adaptedConnection = connection as ConnectionAdapter
     await Promise.all([
       signer.getAddress().then((ethAddress) => {
-        adaptedWallet.publicKey = this.convertEthAddress2Solana(ethAddress);
+        adaptedWallet.publicKey = convertEthAddress2Solana(ethAddress);
       }),
       adaptedConnection.updateWallet(wallet, signer),
     ]);
@@ -90,7 +88,7 @@ export default class Factory implements DevelepmentFramework {
     idl,
     signer,
   }: WorkspaceArgs<T>): Workspace<T> {
-    const { connection, provider, wallet } = this.getProvider(signer);
+    const { connection, provider, wallet } = this.getOrCreateWorkspaceWithoutProgram(signer);
     const programId = this.getPublicKey(idl);
     const program = new Program<T>(idl, programId, provider);
 
