@@ -1,5 +1,7 @@
 # Solana Cartesi Web3 Adapter
 
+[![npm version](https://badge.fury.io/js/solana-cartesi-web3-adapter.svg)](https://badge.fury.io/js/solana-cartesi-web3-adapter)
+
 src/rollups Cartesi Only
 
 src/solana Adapters for Solana
