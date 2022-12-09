@@ -16,8 +16,8 @@
     "test": "node --test --test-only --loader ts-node/esm test/index.test.ts",
     "m:test:watch": "nodemon --ignore cache -e ts,json --exec \"npm run m:test\"",
     "test:watch": "node --watch --loader ts-node/esm src/index.test.ts",
-    "test:debug": "node --inspect --watch --loader ts-node/esm test/index.test.ts"
-    ,"test:coverage": "hardhat coverage"
+    "test:debug": "node --inspect --watch --loader ts-node/esm test/index.test.ts",
+    "test:coverage": "nyc hardhat test"
   },
   "author": {
     "name": "Calindra"
@@ -52,6 +52,7 @@
     "mocha": "^10.1.0",
     "nock": "^13.2.9",
     "nodemon": "^2.0.20",
+    "nyc": "^15.1.0",
     "semver": "^7.3.8",
     "sinon": "^15.0.0",
     "solidity-coverage": "^0.8.2",
