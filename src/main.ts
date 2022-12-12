@@ -16,7 +16,7 @@ export function getWorkspace<T extends Idl>(config: DevWorkspaceArgs<T>) {
     return factory.getWorkspace(config)
 }
 
-export function onWalletConnected<T extends Idl>(config: DevWorkspaceArgs<T>) {
+export async function onWalletConnected<T extends Idl>(config: DevWorkspaceArgs<T>) {
     const cacheKey = createCacheKey(config)
     let factory = cacheFactoryByContractAddress.get(cacheKey);
     if (!factory) {
@@ -24,7 +24,7 @@ export function onWalletConnected<T extends Idl>(config: DevWorkspaceArgs<T>) {
         cacheFactoryByContractAddress.set(cacheKey, factory)
     }
     if (config.signer) {
-        factory.onWalletConnected(config.signer)
+        await factory.onWalletConnected(config.signer)
     }
     return factory.getWorkspace(config)
 }
