@@ -25,6 +25,7 @@ import { InputFacet } from '@cartesi/rollups';
 import { CartesiConfig } from '../types/CartesiConfig';
 import { AccountInfoResponse } from '../types/Connection';
 import { CartesiAccountInfoData } from '../types/CartesiAccountInfoData';
+import { bs58 } from '@project-serum/anchor/dist/cjs/utils/bytes';
 
 export class ConnectionAdapter extends Connection implements ConnectionType {
   constructor(private config: CartesiConfig) {
@@ -201,7 +202,7 @@ export class ConnectionAdapter extends Connection implements ConnectionType {
 
   public async getProgramAccounts(
     programId: PublicKey,
-    _configOrCommitment?: GetProgramAccountsConfig | Commitment
+    configOrCommitment?: GetProgramAccountsConfig | Commitment
   ): Promise<
     Array<{
       pubkey: PublicKey;
@@ -226,7 +227,58 @@ export class ConnectionAdapter extends Connection implements ConnectionType {
       }
     })
 
-    return accounts;
+    const filtered = this.filterAccounts(accounts, configOrCommitment);
+    return this.sliceAccountsData(filtered, configOrCommitment);
+  }
+
+  private sliceAccountsData(accounts: Array<{
+    pubkey: PublicKey;
+    account: AccountInfo<Buffer>
+  }>,
+    configOrCommitment?: GetProgramAccountsConfig | Commitment
+  ) {
+    if (!configOrCommitment) {
+      return accounts;
+    }
+    if (typeof configOrCommitment === 'string') {
+      return accounts;
+    }
+    if (!configOrCommitment?.dataSlice) {
+      return accounts;
+    }
+    return accounts.map(item => {
+      const accountInfo = item.account;
+      const offset = configOrCommitment.dataSlice!.offset;
+      const end = offset + configOrCommitment.dataSlice!.length;
+      accountInfo.data = accountInfo.data.subarray(offset, end);
+      return { ...item, account: { ...accountInfo } };
+    });
+  }
+
+  private filterAccounts(accounts: Array<{
+    pubkey: PublicKey;
+    account: AccountInfo<Buffer>
+  }>,
+    configOrCommitment?: GetProgramAccountsConfig | Commitment
+  ) {
+    if (!configOrCommitment) {
+      return accounts;
+    }
+    if (typeof configOrCommitment === 'string') {
+      return accounts;
+    }
+    return accounts.filter(info => {
+      const diff = configOrCommitment.filters?.find((filter: any) => {
+        if (!filter.memcmp) {
+          return false;
+        }
+        const bytes = bs58.decode(filter.memcmp.bytes)
+        const data = info.account?.data?.subarray(filter.memcmp.offset, filter.memcmp.offset + bytes.length)
+        const notEq = bytes.find((byte: number, i: number) => data[i] !== byte) !== undefined
+        return notEq
+      })
+      return !diff
+    })
   }
 
   public async getBalance(publicKey: PublicKey, commitment?: Commitment | undefined): Promise<number> {
