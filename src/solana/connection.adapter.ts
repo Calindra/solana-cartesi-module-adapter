@@ -16,6 +16,8 @@ import {
   TransactionSignature,
   VersionedTransaction,
   Signer as SolanaSigner,
+  GetTokenAccountsByOwnerConfig,
+  TokenAccountsFilter,
 } from '@solana/web3.js';
 import fetch from "cross-fetch";
 import { Signer, utils as ethersUtils, ethers, BytesLike } from 'ethers';
@@ -198,6 +200,35 @@ export class ConnectionAdapter extends Connection implements ConnectionType {
     }
     const [firstReport] = cartesiResponse.reports;
     return this.parseBytesLikeToKeyAndAccountInfo(firstReport.payload)?.account ?? null;
+  }
+
+  public async getTokenAccountsByOwner(ownerAddress: PublicKey, filter: TokenAccountsFilter, _commitmentOrConfig?: Commitment | GetTokenAccountsByOwnerConfig | undefined): Promise<RpcResponseAndContext<{ pubkey: PublicKey; account: AccountInfo<Buffer>; }[]>> {
+    const baseURL = this.getInspectBaseURL();
+    const urls = `${baseURL}/tokenAccountsByOwner/${ownerAddress.toBase58()}`;
+    let url = new URL(urls);
+    if ('mint' in filter) {
+      url.searchParams.append('mint', filter.mint.toBase58())
+    }
+    if ('programId' in filter) {
+      url.searchParams.append('programId', filter.programId.toBase58())
+    }
+    const cartesiResponse = await this.clientHttpGet<AccountInfoResponse>(url.toString());
+    if (!cartesiResponse.reports || !cartesiResponse.reports.length) {
+      // fallback?
+      return { context: { slot: 1 }, value: [] };
+    }
+    const accounts = cartesiResponse.reports.map(report => {
+      return this.parseBytesLikeToKeyAndAccountInfo(report.payload);
+    }).filter(a => !!a).map(obj => {
+      return {
+        pubkey: new PublicKey(obj!.key),
+        account: obj!.account
+      }
+    })
+    return {
+      context: { slot: 1 },
+      value: accounts
+    }
   }
 
   public async getProgramAccounts(
