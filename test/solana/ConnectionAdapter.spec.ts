@@ -120,4 +120,23 @@ describe('ConnectionAdapter', () => {
             expect(accountInfo?.lamports).to.eq(10467840);
         })
     })
+
+    describe('.getTokenAccountsByOwner()', () => {
+        beforeEach(() => {
+            nock('http://localhost:5005')
+                .get('/inspect/tokenAccountsByOwner/1111111111112RXi1yn6kTp7G8Td7o6z3Ciqw9v2?programId=TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA')
+                .reply(200, require('../fixtures/inspect/tokenAccountsByOwner/tokenAccountsByOwner.json'))
+        })
+
+        it('should read the accounts owned by user', async () => {
+            const tokenProgram = new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA')
+            const publicKey = new PublicKey('1111111111112RXi1yn6kTp7G8Td7o6z3Ciqw9v2');
+            const response = await connection.getTokenAccountsByOwner(publicKey, {
+                programId: tokenProgram
+            });
+            expect(response.value.length).to.eq(1);
+            expect(response.value[0].pubkey.toBase58()).to.eq("6Tw6Z6SsM3ypmGsB3vpSx8midhhyTvTwdPd7K413LyyY");
+            expect(response.value[0].account.data.length).to.eq(165);
+        })
+    })
 });
