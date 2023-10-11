@@ -5,7 +5,7 @@ import { Signer } from 'ethers';
 import { Buffer } from 'buffer';
 import { CartesiConfig } from '../types/CartesiConfig';
 import {
-  DevelepmentFramework,
+  DevelopmentFramework,
   WalletType,
   Workspace,
   WorkspaceArgs,
@@ -16,7 +16,7 @@ import { ConnectionAdapter } from './connection.adapter';
 import { WalletAdapter } from './wallet.adapter';
 import { convertEthAddress2Solana } from '../utils/cartesi';
 
-export default class Factory implements DevelepmentFramework {
+export default class Factory implements DevelopmentFramework {
   createProgram: any;
   constructor(private config: CartesiConfig) {
 

@@ -31,7 +31,7 @@ export interface Framework {
   ): Promise<void>;
 }
 
-export interface DevelepmentFramework extends Framework {
+export interface DevelopmentFramework extends Framework {
   getOrCreateWorkspaceWithoutProgram(signer?: Signer): WorkspaceShared;
   getPublicKey(idl: Idl): PublicKey;
 
